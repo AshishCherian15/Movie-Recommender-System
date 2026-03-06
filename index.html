@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommender System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        .search-section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select, button {
+            padding: 15px 25px;
+            font-size: 1rem;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+        }
+
+        select {
+            flex: 1;
+            background: white;
+            cursor: pointer;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .selected-movie {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .selected-movie.active {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .selected-movie img {
+            width: 120px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .selected-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .selected-info p {
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .recommendations-section {
+            margin-top: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .movies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+
+        .movie-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .movie-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+
+        .movie-info {
+            padding: 15px;
+        }
+
+        .movie-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .movie-genre {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+
+        .similarity-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #667eea;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .movie-card {
+            position: relative;
+        }
+
+        .no-recommendations {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Movie Recommender System</h1>
+        <p class="subtitle">Content-Based Filtering using TF-IDF and Cosine Similarity</p>
+
+        <div class="search-section">
+            <h2 style="margin-bottom: 20px; color: #333;">Select a Movie</h2>
+            <div class="search-box">
+                <select id="movieSelect">
+                    <option value="">Choose a movie...</option>
+                </select>
+                <button onclick="getRecommendations()">Get Recommendations</button>
+            </div>
+
+            <div id="selectedMovie" class="selected-movie">
+                <img id="selectedPoster" src="" alt="Movie Poster">
+                <div class="selected-info">
+                    <h3 id="selectedTitle"></h3>
+                    <p id="selectedGenre"></p>
+                    <p id="selectedOverview"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommendations-section" id="recommendationsSection" style="display: none;">
+            <h2 class="section-title">Recommended Movies</h2>
+            <div id="moviesGrid" class="movies-grid"></div>
+        </div>
+
+        <div class="footer">
+            <p>Built with Python • TF-IDF Vectorization • Cosine Similarity</p>
+            <p style="margin-top: 10px; font-size: 0.9rem;">Content-Based Movie Recommender System Assignment</p>
+        </div>
+    </div>
+
+    <script>
+        // Movie dataset (matching Python code)
+        const movies = [
+            {
+                id: 1, title: 'The Avengers', genre: 'Action, Superhero, Adventure',
+                overview: 'Earth mightiest heroes must come together to stop an alien invasion led by Loki and save the planet from destruction.',
+                poster: 'https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg'
+            },
+            {
+                id: 2, title: 'Iron Man', genre: 'Action, Superhero, Sci-Fi',
+                overview: 'Genius billionaire Tony Stark builds a high-tech armored suit to fight evil and protect the world after being captured by terrorists.',
+                poster: 'https://image.tmdb.org/t/p/w500/78lPtwv72eTNqFW9COBYI0dWDJa.jpg'
+            },
+            {
+                id: 3, title: 'Captain America', genre: 'Action, Superhero, War',
+                overview: 'Steve Rogers volunteers for a secret experiment that transforms him into Captain America, a super soldier fighting against evil forces.',
+                poster: 'https://image.tmdb.org/t/p/w500/vSNxAJTlD0r02V9sPYpOjqDZXUK.jpg'
+            },
+            {
+                id: 4, title: 'Thor', genre: 'Action, Superhero, Fantasy',
+                overview: 'The mighty Thor is cast out of Asgard and must prove himself worthy to reclaim his power and save both Earth and Asgard.',
+                poster: 'https://image.tmdb.org/t/p/w500/prSfAi1xGrhLQNxVSUFh61xQ4Qy.jpg'
+            },
+            {
+                id: 5, title: 'Black Widow', genre: 'Action, Spy, Thriller',
+                overview: 'Natasha Romanoff confronts her past as a Russian spy while dealing with a dangerous conspiracy that threatens her family.',
+                poster: 'https://image.tmdb.org/t/p/w500/qAZ0pzat24kLdO3o8ejmbLxyOac.jpg'
+            },
+            {
+                id: 6, title: 'Titanic', genre: 'Romance, Drama, Disaster',
+                overview: 'A young aristocrat falls in love with a poor artist aboard the ill-fated maiden voyage of the RMS Titanic.',
+                poster: 'https://image.tmdb.org/t/p/w500/9xjZS2rlVxm8SFx8kPC3aIGCOYQ.jpg'
+            },
+            {
+                id: 7, title: 'The Notebook', genre: 'Romance, Drama',
+                overview: 'A poor young man falls in love with a rich young woman giving them one summer together before circumstances force them apart.',
+                poster: 'https://image.tmdb.org/t/p/w500/rNzQyW4f8B8cQeg7Dgj3n6eT5k9.jpg'
+            },
+            {
+                id: 8, title: 'La La Land', genre: 'Romance, Musical, Drama',
+                overview: 'An aspiring actress and a dedicated jazz musician struggle to make their dreams come true while falling in love in Los Angeles.',
+                poster: 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg'
+            },
+            {
+                id: 9, title: 'Pride and Prejudice', genre: 'Romance, Drama, Period',
+                overview: 'Elizabeth Bennet must overcome her prejudice against the proud Mr. Darcy to find true love in 19th century England.',
+                poster: 'https://image.tmdb.org/t/p/w500/sGjIvtVvTlWnia2zfJfHz81pZ9Q.jpg'
+            },
+            {
+                id: 10, title: 'Romeo and Juliet', genre: 'Romance, Drama, Tragedy',
+                overview: 'Two young star-crossed lovers from feuding families fall deeply in love leading to tragic consequences.',
+                poster: 'https://image.tmdb.org/t/p/w500/xBKGJQsAIeweesB79KC89FpBrVr.jpg'
+            },
+            {
+                id: 11, title: 'Inception', genre: 'Sci-Fi, Thriller, Action',
+                overview: 'A thief who steals corporate secrets through dream-sharing technology is given a final chance at redemption involving planting an idea.',
+                poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg'
+            },
+            {
+                id: 12, title: 'Interstellar', genre: 'Sci-Fi, Drama, Adventure',
+                overview: 'A team of explorers travel through a wormhole in space to ensure humanity survival by finding a new habitable planet.',
+                poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg'
+            },
+            {
+                id: 13, title: 'The Matrix', genre: 'Sci-Fi, Action, Cyberpunk',
+                overview: 'A computer hacker discovers that reality as he knows it is actually a simulated world created by machines.',
+                poster: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg'
+            },
+            {
+                id: 14, title: 'Blade Runner 2049', genre: 'Sci-Fi, Mystery, Thriller',
+                overview: 'A young blade runner discovers a secret that could plunge society into chaos and lead him to find a legendary blade runner.',
+                poster: 'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg'
+            },
+            {
+                id: 15, title: 'Ex Machina', genre: 'Sci-Fi, Thriller, Drama',
+                overview: 'A young programmer is selected to evaluate the human qualities of a highly advanced humanoid artificial intelligence.',
+                poster: 'https://image.tmdb.org/t/p/w500/qvktm0BHcnmDpul4Hz01GIazWPr.jpg'
+            },
+            {
+                id: 16, title: 'The Dark Knight', genre: 'Action, Crime, Thriller',
+                overview: 'Batman faces the Joker, a criminal mastermind who wants to plunge Gotham City into anarchy and chaos.',
+                poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg'
+            },
+            {
+                id: 17, title: 'Joker', genre: 'Crime, Drama, Thriller',
+                overview: 'A failed comedian descends into madness and becomes the criminal mastermind known as the Joker in Gotham City.',
+                poster: 'https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg'
+            },
+            {
+                id: 18, title: 'Batman Begins', genre: 'Action, Crime, Superhero',
+                overview: 'Bruce Wayne becomes Batman to fight crime and corruption in Gotham City after witnessing his parents murder.',
+                poster: 'https://image.tmdb.org/t/p/w500/dr6x4GyyeggnhUKHkj5YYAVQHUM.jpg'
+            },
+            {
+                id: 19, title: 'The Godfather', genre: 'Crime, Drama, Mafia',
+                overview: 'The aging patriarch of an organized crime dynasty transfers control to his reluctant son leading to violence.',
+                poster: 'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg'
+            },
+            {
+                id: 20, title: 'Scarface', genre: 'Crime, Drama, Gangster',
+                overview: 'A Cuban refugee becomes a powerful drug lord in Miami during the cocaine boom of the 1980s.',
+                poster: 'https://image.tmdb.org/t/p/w500/iQ0yzm9gfR2vEZZ3JNhJRGr1b3I.jpg'
+            },
+            {
+                id: 21, title: 'Toy Story', genre: 'Animation, Family, Comedy',
+                overview: 'Toys come to life when humans are not around and must work together to find their way back home.',
+                poster: 'https://image.tmdb.org/t/p/w500/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg'
+            },
+            {
+                id: 22, title: 'Finding Nemo', genre: 'Animation, Family, Adventure',
+                overview: 'A clownfish embarks on a journey across the ocean to find his son who was captured by divers.',
+                poster: 'https://image.tmdb.org/t/p/w500/eHuGQ10FUzK1mdOY69wF5pGgEf5.jpg'
+            },
+            {
+                id: 23, title: 'The Lion King', genre: 'Animation, Family, Drama',
+                overview: 'A young lion prince flees his kingdom after his father is killed but must return to take his rightful place.',
+                poster: 'https://image.tmdb.org/t/p/w500/sKCr78MXSLixwmZ8DyJLrpMsd15.jpg'
+            },
+            {
+                id: 24, title: 'Frozen', genre: 'Animation, Family, Musical',
+                overview: 'A fearless princess teams up with a rugged iceman to find her sister whose icy powers have trapped the kingdom in eternal winter.',
+                poster: 'https://image.tmdb.org/t/p/w500/kgwjIb2JDHRhNk13lmSxiClFjc4.jpg'
+            },
+            {
+                id: 25, title: 'Moana', genre: 'Animation, Family, Adventure',
+                overview: 'A spirited teenager sails out on a daring mission to save her people guided by the ocean and a legendary demigod.',
+                poster: 'https://image.tmdb.org/t/p/w500/4JeejGugONWpJkbnvL12hVoYEDa.jpg'
+            }
+        ];
+
+        // Precomputed recommendations (from Python cosine similarity)
+        const recommendations = {
+            'The Avengers': [
+                {title: 'Iron Man', genre: 'Action, Superhero, Sci-Fi', poster: 'https://image.tmdb.org/t/p/w500/78lPtwv72eTNqFW9COBYI0dWDJa.jpg', score: 0.52},
+                {title: 'Captain America', genre: 'Action, Superhero, War', poster: 'https://image.tmdb.org/t/p/w500/vSNxAJTlD0r02V9sPYpOjqDZXUK.jpg', score: 0.51},
+                {title: 'Thor', genre: 'Action, Superhero, Fantasy', poster: 'https://image.tmdb.org/t/p/w500/prSfAi1xGrhLQNxVSUFh61xQ4Qy.jpg', score: 0.48},
+                {title: 'Black Widow', genre: 'Action, Spy, Thriller', poster: 'https://image.tmdb.org/t/p/w500/qAZ0pzat24kLdO3o8ejmbLxyOac.jpg', score: 0.38},
+                {title: 'The Dark Knight', genre: 'Action, Crime, Thriller', poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg', score: 0.35}
+            ],
+            'Titanic': [
+                {title: 'The Notebook', genre: 'Romance, Drama', poster: 'https://image.tmdb.org/t/p/w500/rNzQyW4f8B8cQeg7Dgj3n6eT5k9.jpg', score: 0.58},
+                {title: 'La La Land', genre: 'Romance, Musical, Drama', poster: 'https://image.tmdb.org/t/p/w500/uDO8zWDhfWwoFdKS4fzkUJt0Rf0.jpg', score: 0.51},
+                {title: 'Pride and Prejudice', genre: 'Romance, Drama, Period', poster: 'https://image.tmdb.org/t/p/w500/sGjIvtVvTlWnia2zfJfHz81pZ9Q.jpg', score: 0.49},
+                {title: 'Romeo and Juliet', genre: 'Romance, Drama, Tragedy', poster: 'https://image.tmdb.org/t/p/w500/xBKGJQsAIeweesB79KC89FpBrVr.jpg', score: 0.47},
+                {title: 'The Godfather', genre: 'Crime, Drama, Mafia', poster: 'https://image.tmdb.org/t/p/w500/3bhkrj58Vtu7enYsRolD1fZdja1.jpg', score: 0.32}
+            ],
+            'Inception': [
+                {title: 'Interstellar', genre: 'Sci-Fi, Drama, Adventure', poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', score: 0.48},
+                {title: 'The Matrix', genre: 'Sci-Fi, Action, Cyberpunk', poster: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', score: 0.45},
+                {title: 'Blade Runner 2049', genre: 'Sci-Fi, Mystery, Thriller', poster: 'https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg', score: 0.43},
+                {title: 'Ex Machina', genre: 'Sci-Fi, Thriller, Drama', poster: 'https://image.tmdb.org/t/p/w500/qvktm0BHcnmDpul4Hz01GIazWPr.jpg', score: 0.42},
+                {title: 'The Avengers', genre: 'Action, Superhero, Adventure', poster: 'https://image.tmdb.org/t/p/w500/RYMX2wcKCBAr24UyPD7xwmjaTn.jpg', score: 0.35}
+            ]
+        };
+
+        // Populate movie select
+        const select = document.getElementById('movieSelect');
+        movies.forEach(movie => {
+            const option = document.createElement('option');
+            option.value = movie.title;
+            option.textContent = movie.title;
+            select.appendChild(option);
+        });
+
+        function getRecommendations() {
+            const selectedTitle = document.getElementById('movieSelect').value;
+            if (!selectedTitle) {
+                alert('Please select a movie first!');
+                return;
+            }
+
+            const movie = movies.find(m => m.title === selectedTitle);
+            
+            // Show selected movie
+            document.getElementById('selectedMovie').classList.add('active');
+            document.getElementById('selectedPoster').src = movie.poster;
+            document.getElementById('selectedTitle').textContent = movie.title;
+            document.getElementById('selectedGenre').textContent = `Genre: ${movie.genre}`;
+            document.getElementById('selectedOverview').textContent = movie.overview;
+
+            // Show recommendations
+            const recsSection = document.getElementById('recommendationsSection');
+            const grid = document.getElementById('moviesGrid');
+            
+            recsSection.style.display = 'block';
+            grid.innerHTML = '';
+
+            const recs = recommendations[selectedTitle] || [];
+            
+            if (recs.length === 0) {
+                grid.innerHTML = '<div class="no-recommendations">No recommendations available for this movie yet.</div>';
+                return;
+            }
+
+            recs.forEach((rec, index) => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.innerHTML = `
+                    <div class="rank-badge">#${index + 1}</div>
+                    <img src="${rec.poster}" alt="${rec.title}">
+                    <div class="movie-info">
+                        <div class="movie-title">${rec.title}</div>
+                        <div class="movie-genre">${rec.genre}</div>
+                        <span class="similarity-badge">${(rec.score * 100).toFixed(1)}% Match</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Scroll to recommendations
+            recsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    </script>
+</body>
+</html>
