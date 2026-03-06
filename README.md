@@ -2,6 +2,9 @@
 
 A content-based movie recommendation system that suggests similar movies based on genre and overview using TF-IDF vectorization and cosine similarity.
 
+## 🚀 Live Demo
+Experience the live application here: Movie Recommender System on Vercel
+
 ## 🎓 Certification
 
 This project was completed as part of the **Advanced Content-Based Recommender System Essentials Workshop** by **LetsUpgrade**, in collaboration with **NSDC** and **GDG MAD**.
