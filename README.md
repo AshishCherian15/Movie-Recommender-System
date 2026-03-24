@@ -50,6 +50,21 @@ Simply select a movie and get personalized recommendations with similarity score
 
 ---
 
+## ✅ LetsUpgrade Certificate Verification
+
+**Certificate Holder:** Ashish Cherian  
+**Organizer:** LetsUpgrade EdTech Pvt. Ltd.
+
+### Verified Workshop Completion
+
+| Workshop | Completion Date | Certificate ID | Collaborators | Status |
+|---|---|---|---|---|
+| Content-Based Recommender System Essentials Workshop | 6 March 2026 | LUEARAFEB12640 | NSDC, ITM Edutech, GDG MAD | ✅ Completed |
+
+**Verification Link:** [www.letsupgrade.in/verify](https://www.letsupgrade.in/verify)
+
+---
+
 ## 🌟 Features
 
 - ✨ **Content-Based Filtering** — Recommends movies based on genre and plot similarity
